@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ODI Match Predictor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     * {
       box-sizing: border-box;
@@ -108,9 +108,7 @@
       border-radius: 25px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
       text-align: center;
-      transition: all 0.3s ease;
       min-width: 350px;
-      animation: fadeIn 1s ease-out;
     }
 
     .container:hover {
@@ -143,7 +141,6 @@
       font-size: 1rem;
       background: #f9f9f9;
       transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
 
     input[type="number"]:focus {
@@ -162,15 +159,12 @@
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
       margin-top: 10px;
-      box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
     }
 
     button:hover {
       background-color: #0056b3;
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 86, 179, 0.4);
     }
 
     button:active {
@@ -191,38 +185,6 @@
       font-size: 0.9rem;
       color: #888;
       text-align: center;
-    }
-
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 2.2rem;
-      }
-      .team-inputs {
-        gap: 10px;
-      }
-      .container {
-        padding: 25px 15px;
-      }
-      .flags-display {
-        flex-direction: column;
-        gap: 20px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      h1 {
-        font-size: 1.8rem;
-      }
-      .container h2 {
-        font-size: 1.5rem;
-      }
-      input[type="number"], button {
-        font-size: 0.9rem;
-        padding: 12px;
-      }
-      .container {
-        padding: 20px 15px;
-      }
     }
   </style>
 </head>
@@ -246,13 +208,10 @@
     <h2>First Innings Prediction</h2>
     <label for="curr_runs">🏏 Current Runs:</label>
     <input type="number" id="curr_runs">
-
     <label for="curr_wickets">\|/ Wickets Lost:</label>
     <input type="number" id="curr_wickets">
-
     <label for="overs">⏱️ Overs:</label>
     <input type="number" step="0.1" id="overs">
-
     <button onclick="predictFirstInnings()">Predict Final Score</button>
     <p id="prediction_result"></p>
   </div>
@@ -261,16 +220,12 @@
     <h2>Second Innings Prediction</h2>
     <label for="target">🎯 Target Score:</label>
     <input type="number" id="target">
-
     <label for="curr_runs2">🏏 Current Runs:</label>
     <input type="number" id="curr_runs2">
-
     <label for="curr_wickets2">\|/ Wickets Lost:</label>
     <input type="number" id="curr_wickets2">
-
     <label for="overs2">⏱️ Overs:</label>
     <input type="number" step="0.1" id="overs2">
-
     <button onclick="predictSecondInnings()">Predict Win Probability</button>
     <p id="chase_result"></p>
   </div>
@@ -280,39 +235,50 @@
 
 <script>
   const flags = {
-    "India": "https://flagcdn.com/w320/in.png",
-    "Australia": "https://flagcdn.com/w320/au.png",
-    "England": "https://flagcdn.com/w320/gb.png",
-    "Pakistan": "https://flagcdn.com/w320/pk.png",
-    "South Africa": "https://flagcdn.com/w320/za.png",
-    "New Zealand": "https://flagcdn.com/w320/nz.png",
-    "Sri Lanka": "https://flagcdn.com/w320/lk.png",
-    "Bangladesh": "https://flagcdn.com/w320/bd.png",
     "Afghanistan": "https://flagcdn.com/w320/af.png",
-    "West Indies": "https://flagcdn.com/w320/jm.png",
-    "Zimbabwe": "https://flagcdn.com/w320/zw.png",
+    "Australia": "https://flagcdn.com/w320/au.png",
+    "Bangladesh": "https://flagcdn.com/w320/bd.png",
+    "England": "https://flagcdn.com/w320/gb.png",
+    "India": "https://flagcdn.com/w320/in.png",
     "Ireland": "https://flagcdn.com/w320/ie.png",
     "Nepal": "https://flagcdn.com/w320/np.png",
-    "Netherlands": "https://flagcdn.com/w320/nl.png"
+    "Netherlands": "https://flagcdn.com/w320/nl.png",
+    "New Zealand": "https://flagcdn.com/w320/nz.png",
+    "Pakistan": "https://flagcdn.com/w320/pk.png",
+    "South Africa": "https://flagcdn.com/w320/za.png",
+    "Sri Lanka": "https://flagcdn.com/w320/lk.png",
+    "West Indies": "https://flagcdn.com/w320/jm.png",
+    "Zimbabwe": "https://flagcdn.com/w320/zw.png"
   };
 
   let teamBatting = "";
   let teamBowling = "";
 
-  // Populate dropdowns
-  window.onload = function() {
+  window.onload = function () {
     const battingSelect = document.getElementById("team_batting");
     const bowlingSelect = document.getElementById("team_bowling");
-    Object.keys(flags).forEach(team => {
-      battingSelect.innerHTML += `<option value="${team}">${team}</option>`;
-      bowlingSelect.innerHTML += `<option value="${team}">${team}</option>`;
+
+    const sortedTeams = Object.keys(flags).sort();
+    sortedTeams.forEach(team => {
+      const option = document.createElement("option");
+      option.value = team;
+      option.text = team;
+      battingSelect.appendChild(option.cloneNode(true));
+      bowlingSelect.appendChild(option);
     });
   };
 
   function getTeams() {
     teamBatting = document.getElementById("team_batting").value;
     teamBowling = document.getElementById("team_bowling").value;
+
     if (teamBatting && teamBowling) {
+      if (teamBatting === teamBowling) {
+        alert("❌ Batting and Bowling teams cannot be the same!");
+        document.getElementById("team_bowling").value = "";
+        document.getElementById("flags_display").innerHTML = "";
+        return;
+      }
       showFlags(teamBatting, teamBowling);
     }
   }
@@ -387,39 +353,6 @@
       alert("Error: Unable to get prediction!");
     }
   }
-
-  // Handle Enter key to move focus or submit
-  document.addEventListener('DOMContentLoaded', () => {
-    const firstInningsInputs = [
-      document.getElementById('curr_runs'),
-      document.getElementById('curr_wickets'),
-      document.getElementById('overs')
-    ];
-    const secondInningsInputs = [
-      document.getElementById('target'),
-      document.getElementById('curr_runs2'),
-      document.getElementById('curr_wickets2'),
-      document.getElementById('overs2')
-    ];
-
-    function handleKeyPress(inputs, finalAction) {
-      inputs.forEach((input, idx) => {
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            if (idx < inputs.length - 1) {
-              inputs[idx + 1].focus();
-            } else {
-              finalAction();
-            }
-          }
-        });
-      });
-    }
-
-    handleKeyPress(firstInningsInputs, predictFirstInnings);
-    handleKeyPress(secondInningsInputs, predictSecondInnings);
-  });
 </script>
 
 </body>
