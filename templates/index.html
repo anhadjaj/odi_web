@@ -6,6 +6,18 @@
   <title>ODI Match Predictor</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --bg-light: #e0eafc;
+      --bg-dark: #1f1f1f;
+      --text-light: #222;
+      --text-dark: #f0f0f0;
+      --card-bg-light: #ffffff;
+      --card-bg-dark: #2e2e2e;
+      --accent: #007bff;
+      --result-bg-light: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      --result-bg-dark: linear-gradient(135deg, #3a3a3a, #555);
+    }
+
     * {
       box-sizing: border-box;
       scroll-behavior: smooth;
@@ -13,81 +25,111 @@
 
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      background: var(--bg-light);
+      color: var(--text-light);
       margin: 0;
       padding: 0;
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      animation: fadeIn 1s ease-out;
+      flex-direction: row;
+      transition: all 0.3s ease;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    body.dark-mode {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #ffffff;
+      padding: 20px;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark-mode .sidebar {
+      background-color: #2e2e2e;
+    }
+
+    .sidebar h2 {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input { display: none; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--accent);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .theme-toggle-wrapper {
+      margin-bottom: 20px;
+    }
+
+    .theme-toggle-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .format-section {
+      margin-top: 30px;
+    }
+
+    .format-section h3 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .format-option {
+      margin-bottom: 10px;
+    }
+
+    .main-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     h1 {
       margin-top: 30px;
       font-size: 3rem;
-      color: #222;
       font-weight: 700;
       letter-spacing: 1px;
       text-shadow: 1px 1px 4px rgba(0,0,0,0.1);
-    }
-
-    .team-inputs {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 30px;
-      gap: 20px;
-      padding: 0 20px;
-      width: 100%;
-      max-width: 800px;
-    }
-
-    select {
-      flex: 1 1 300px;
-      padding: 14px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 15px;
-      background: #f9f9f9;
-      transition: all 0.3s ease;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-      appearance: none;
-    }
-
-    select:focus {
-      border-color: #007bff;
-      outline: none;
-      background: #eef7ff;
-    }
-
-    .flags-display {
-      margin-top: 20px;
-      display: flex;
-      gap: 40px;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .flags-display img {
-      width: 90px;
-      height: auto;
-      object-fit: contain;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .flags-display .team-name {
-      text-align: center;
-      font-weight: 600;
-      color: #333;
-      margin-top: 8px;
     }
 
     .content {
@@ -102,34 +144,23 @@
     }
 
     .container {
-      background: #ffffff;
-      flex: 1 1 400px;
+      background: var(--card-bg-light);
       padding: 35px 30px;
       border-radius: 25px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      text-align: center;
       min-width: 350px;
+      transition: 0.3s;
     }
 
-    .container:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .container h2 {
-      margin-bottom: 25px;
-      font-size: 1.8rem;
-      color: #333;
-      font-weight: 600;
+    body.dark-mode .container {
+      background: var(--card-bg-dark);
+      box-shadow: 0 8px 20px rgba(255, 255, 255, 0.05);
     }
 
     label {
       display: block;
-      text-align: left;
-      margin: 15px 0 8px;
+      margin-top: 15px;
       font-weight: 600;
-      color: #555;
-      font-size: 0.95rem;
     }
 
     input[type="number"] {
@@ -137,20 +168,11 @@
       padding: 14px;
       border: 1px solid #ccc;
       border-radius: 15px;
-      margin-bottom: 20px;
       font-size: 1rem;
-      background: #f9f9f9;
-      transition: all 0.3s ease;
-    }
-
-    input[type="number"]:focus {
-      border-color: #007bff;
-      outline: none;
-      background: #eef7ff;
     }
 
     button {
-      background-color: #007bff;
+      background-color: var(--accent);
       color: white;
       border: none;
       padding: 15px;
@@ -158,202 +180,157 @@
       border-radius: 15px;
       font-size: 1rem;
       font-weight: 600;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-      transform: translateY(-2px);
-    }
-
-    button:active {
-      transform: scale(0.97);
-    }
-
-    p {
       margin-top: 20px;
-      font-size: 1.2rem;
-      color: #007bff;
-      font-weight: 600;
-      word-break: break-word;
+      cursor: pointer;
     }
 
-    footer {
-      margin-top: 50px;
+    .result-card {
+      background: var(--result-bg-light);
       padding: 20px;
-      font-size: 0.9rem;
-      color: #888;
+      margin-top: 20px;
+      border-radius: 15px;
+      font-size: 1.2rem;
       text-align: center;
+      color: #000;
+    }
+
+    body.dark-mode .result-card {
+      background: var(--result-bg-dark);
+      color: #fff;
+    }
+
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--accent);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-
-<h1>🏏 ODI Match Predictor</h1>
-
-<div class="team-inputs">
-  <select id="team_batting" onchange="getTeams()">
-    <option value="">Select Batting Team</option>
-  </select>
-  <select id="team_bowling" onchange="getTeams()">
-    <option value="">Select Bowling Team</option>
-  </select>
-</div>
-
-<div class="flags-display" id="flags_display"></div>
-
-<div class="content">
-  <div class="container">
-    <h2>First Innings Prediction</h2>
-    <label for="curr_runs">🏏 Current Runs:</label>
-    <input type="number" id="curr_runs">
-    <label for="curr_wickets">\|/ Wickets Lost:</label>
-    <input type="number" id="curr_wickets">
-    <label for="overs">⏱️ Overs:</label>
-    <input type="number" step="0.1" id="overs">
-    <button onclick="predictFirstInnings()">Predict Final Score</button>
-    <p id="prediction_result"></p>
+  <div class="sidebar">
+    <h2>⚙️ Settings</h2>
+    <div class="theme-toggle-wrapper">
+      <div class="theme-toggle-label">
+        <span>🌗 Dark Mode</span>
+        <label class="switch">
+          <input type="checkbox" onchange="toggleTheme()">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="format-section">
+      <h3>📋 Format</h3>
+      <div class="format-option">
+        <input type="radio" id="format_odi" name="match_format" value="ODI" checked>
+        <label for="format_odi">ODI</label>
+      </div>
+      <div class="format-option">
+        <input type="radio" id="format_t20i" name="match_format" value="T20I">
+        <label for="format_t20i">T20I</label>
+      </div>
+    </div>
   </div>
 
-  <div class="container">
-    <h2>Second Innings Prediction</h2>
-    <label for="target">🎯 Target Score:</label>
-    <input type="number" id="target">
-    <label for="curr_runs2">🏏 Current Runs:</label>
-    <input type="number" id="curr_runs2">
-    <label for="curr_wickets2">\|/ Wickets Lost:</label>
-    <input type="number" id="curr_wickets2">
-    <label for="overs2">⏱️ Overs:</label>
-    <input type="number" step="0.1" id="overs2">
-    <button onclick="predictSecondInnings()">Predict Win Probability</button>
-    <p id="chase_result"></p>
+  <div class="main-content">
+    <h1>🏏 ODI Match Predictor</h1>
+    <div class="content">
+      <div class="container">
+        <h2>First Innings Prediction</h2>
+        <label>Current Runs</label>
+        <input type="number" id="curr_runs" min="0" required>
+        <label>Wickets Lost</label>
+        <input type="number" id="curr_wickets" min="0" max="10" required>
+        <label>Overs</label>
+        <input type="number" id="overs" min="0" step="0.1" required>
+        <button onclick="predictFirstInnings()">Predict Final Score</button>
+        <div class="loader" id="loader1"></div>
+        <div class="result-card" id="prediction_result"></div>
+      </div>
+
+      <div class="container">
+        <h2>Second Innings Prediction</h2>
+        <label>Target Score</label>
+        <input type="number" id="target" min="0" required>
+        <label>Current Runs</label>
+        <input type="number" id="curr_runs2" min="0" required>
+        <label>Wickets Lost</label>
+        <input type="number" id="curr_wickets2" min="0" max="10" required>
+        <label>Overs</label>
+        <input type="number" id="overs2" min="0" step="0.1" required>
+        <button onclick="predictSecondInnings()">Predict Win Probability</button>
+        <div class="loader" id="loader2"></div>
+        <div class="result-card" id="chase_result"></div>
+      </div>
+    </div>
   </div>
-</div>
 
-<footer>© 2025 ODI Predictor. All rights reserved.</footer>
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
 
-<script>
-  const flags = {
-    "Afghanistan": "https://flagcdn.com/w320/af.png",
-    "Australia": "https://flagcdn.com/w320/au.png",
-    "Bangladesh": "https://flagcdn.com/w320/bd.png",
-    "England": "https://flagcdn.com/w320/gb.png",
-    "India": "https://flagcdn.com/w320/in.png",
-    "Ireland": "https://flagcdn.com/w320/ie.png",
-    "Nepal": "https://flagcdn.com/w320/np.png",
-    "Netherlands": "https://flagcdn.com/w320/nl.png",
-    "New Zealand": "https://flagcdn.com/w320/nz.png",
-    "Pakistan": "https://flagcdn.com/w320/pk.png",
-    "South Africa": "https://flagcdn.com/w320/za.png",
-    "Sri Lanka": "https://flagcdn.com/w320/lk.png",
-    "West Indies": "https://flagcdn.com/w320/jm.png",
-    "Zimbabwe": "https://flagcdn.com/w320/zw.png"
-  };
+    async function predictFirstInnings() {
+      const runs = document.getElementById("curr_runs").value;
+      const wickets = document.getElementById("curr_wickets").value;
+      const overs = document.getElementById("overs").value;
+      const loader = document.getElementById("loader1");
+      const result = document.getElementById("prediction_result");
 
-  let teamBatting = "";
-  let teamBowling = "";
+      loader.style.display = 'block';
+      result.innerHTML = '';
 
-  window.onload = function () {
-    const battingSelect = document.getElementById("team_batting");
-    const bowlingSelect = document.getElementById("team_bowling");
-
-    const sortedTeams = Object.keys(flags).sort();
-    sortedTeams.forEach(team => {
-      const option = document.createElement("option");
-      option.value = team;
-      option.text = team;
-      battingSelect.appendChild(option.cloneNode(true));
-      bowlingSelect.appendChild(option);
-    });
-  };
-
-  function getTeams() {
-    teamBatting = document.getElementById("team_batting").value;
-    teamBowling = document.getElementById("team_bowling").value;
-
-    if (teamBatting && teamBowling) {
-      if (teamBatting === teamBowling) {
-        alert("❌ Batting and Bowling teams cannot be the same!");
-        document.getElementById("team_bowling").value = "";
-        document.getElementById("flags_display").innerHTML = "";
-        return;
+      try {
+        const res = await fetch('/predict_first_innings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ curr_runs: runs, curr_wickets: wickets, overs })
+        });
+        const data = await res.json();
+        result.innerHTML = `🎯 Predicted Final Score: <strong>${data.prediction} Runs</strong>`;
+      } catch (err) {
+        result.innerHTML = `❌ Error fetching prediction.`;
+      } finally {
+        loader.style.display = 'none';
       }
-      showFlags(teamBatting, teamBowling);
     }
-  }
 
-  function showFlags(team1, team2) {
-    document.getElementById("flags_display").innerHTML = `
-      <div>
-        <img src="${flags[team1]}" alt="${team1}">
-        <div class="team-name">${team1}</div>
-      </div>
-      <div>
-        <img src="${flags[team2]}" alt="${team2}">
-        <div class="team-name">${team2}</div>
-      </div>
-    `;
-  }
+    async function predictSecondInnings() {
+      const target = document.getElementById("target").value;
+      const runs = document.getElementById("curr_runs2").value;
+      const wickets = document.getElementById("curr_wickets2").value;
+      const overs = document.getElementById("overs2").value;
+      const loader = document.getElementById("loader2");
+      const result = document.getElementById("chase_result");
 
-  async function predictFirstInnings() {
-    if (!teamBatting || !teamBowling) {
-      alert("Please select both teams!");
-      return;
+      loader.style.display = 'block';
+      result.innerHTML = '';
+
+      try {
+        const res = await fetch('/predict_second_innings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, curr_runs: runs, curr_wickets: wickets, overs })
+        });
+        const data = await res.json();
+        result.innerHTML = `🏆 Probable Winner: <strong>${data["Probable Winner"]}</strong><br><br>
+          Team 1: ${data["Probability of Team 1 Winning"]}% | 
+          Team 2: ${data["Probability of Team 2 Winning"]}%`;
+      } catch (err) {
+        result.innerHTML = `❌ Error fetching prediction.`;
+      } finally {
+        loader.style.display = 'none';
+      }
     }
-    const curr_runs = document.getElementById("curr_runs").value;
-    const curr_wickets = document.getElementById("curr_wickets").value;
-    const overs = document.getElementById("overs").value;
-    try {
-      const response = await fetch('/predict_first_innings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ curr_runs, curr_wickets, overs })
-      });
-      const data = await response.json();
-      document.getElementById("prediction_result").innerHTML = `
-        🎯 Predicted Final Score for 
-        <img src="${flags[teamBatting]}" width="30"> <strong>${teamBatting}</strong>: 
-        <br><br>
-        <span style="font-size: 1.5rem;">${data.prediction} Runs</span>
-      `;
-    } catch (error) {
-      console.error(error);
-      alert("Error: Unable to get prediction!");
-    }
-  }
-
-  async function predictSecondInnings() {
-    if (!teamBatting || !teamBowling) {
-      alert("Please select both teams!");
-      return;
-    }
-    const target = document.getElementById("target").value;
-    const curr_runs = document.getElementById("curr_runs2").value;
-    const curr_wickets = document.getElementById("curr_wickets2").value;
-    const overs = document.getElementById("overs2").value;
-    try {
-      const response = await fetch('/predict_second_innings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target, curr_runs, curr_wickets, overs })
-      });
-      const data = await response.json();
-      const team2WinProb = data["Probability of Team 2 Winning"];
-      const team1WinProb = 100 - team2WinProb;
-      const probableWinner = team2WinProb > team1WinProb ? teamBowling : teamBatting;
-
-      document.getElementById("chase_result").innerHTML = `
-        🏆 Probable Winner: 
-        <img src="${flags[probableWinner]}" width="30"> <strong>${probableWinner}</strong><br><br>
-        ${teamBatting}: ${team1WinProb.toFixed(2)}% | ${teamBowling}: ${team2WinProb.toFixed(2)}%
-      `;
-    } catch (error) {
-      console.error(error);
-      alert("Error: Unable to get prediction!");
-    }
-  }
-</script>
-
+  </script>
 </body>
 </html>
