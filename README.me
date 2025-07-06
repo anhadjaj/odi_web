@@ -1,1 +1,119 @@
-a
+# 🏏 ODI Cricket Match Prediction – Web App
+
+This is a **Flask-based web application** that enables real-time predictions during One Day Internationals (ODIs):
+
+- **First Innings Final Score Prediction** using a TensorFlow Lite LSTM model.
+- **Second Innings Chase Success Prediction** using a dense neural network in TFLite format.
+
+---
+
+## 🌐 Live Interface
+
+The application allows users to enter match data, such as current runs, wickets, and overs. Upon submitting:
+
+- First innings returns a **predicted final score**.
+- Second innings returns a **chase win probability (%)**.
+
+Team selection automatically displays national flags using a simple JS mapping.
+
+---
+
+## 🧠 First Innings: Final Score Prediction
+
+> Predicts the final total runs of the first innings based on the current state.
+
+### ✅ Features Used
+
+- `curr_runs`: Runs at the current over
+- `curr_wickets`: Wickets fallen so far
+- `overs`: Overs completed
+
+### ⚙️ Model: LSTM (TFLite version)
+
+- Layers: LSTM(64) → LSTM(32) → Dropout → BatchNorm → Dense
+- Converted to `.tflite` for deployment
+- Input reshaped to `(1, 1, 3)` in real-time
+
+### 📦 Files
+
+- `venue_odi_target_predictor_lstm.tflite`
+- `scaler_first.pkl`
+
+---
+
+## 🏃‍♂️ Second Innings: Chase Success Prediction
+
+> Predicts the win probability for the team batting second.
+
+### ✅ Features Used
+
+- `target_runs`: Target set in first innings
+- `curr_runs`: Current score of second innings
+- `curr_wickets`: Wickets fallen
+- `overs`: Overs completed
+
+### ⚙️ Model: Dense Neural Network (TFLite version)
+
+- Layers: Dense(32) → Dropout → Dense(16) → Dropout → Dense(8) → Sigmoid
+- Binary classification (win/lose)
+- Outputs probability between 0 and 1
+
+### 📦 Files
+
+- `venue_odi_chase_predictor_new.tflite`
+- `scaler_second.pkl`
+
+---
+
+## 🖼️ Frontend Overview
+
+- **Framework:** Pure HTML, CSS, JS 
+- **Features:**
+  - Dynamic team selection with flag images
+  - Responsive UI for score and win probability input
+  - Validation for numeric fields
+
+---
+
+## 🛠️ Backend Details
+
+- **Framework:** Flask
+- **Inference:** TensorFlow Lite Interpreter
+- **Scalers:** `pickle`-based `MinMaxScaler` for preprocessing inputs
+- **Port:** Default runs at `localhost:5003`
+
+### 📁 Backend Files
+
+```
+app.py                      # Flask entrypoint
+templates/index.html       # UI template
+scaler_first.pkl           # Scaler for innings 1 model
+scaler_second.pkl          # Scaler for innings 2 model
+venue_odi_target_predictor_lstm.tflite
+venue_odi_chase_predictor_new.tflite
+```
+
+---
+
+## How to Access the model: https://cricpred.onrender.com/
+
+---
+
+## 📈 Model Evaluation
+
+| Model                  | Accuracy / Score     |
+|------------------------|----------------------|
+| LSTM Final Score       | MAE ≈ 30 runs        |
+| NN Win Probability     | Accuracy ≈ 82%       |
+
+Models were trained using Cricsheet ball-by-ball data and manually scaled/cropped for performance in real-time prediction.
+
+---
+
+## 🔮 Future Extensions
+
+- Integrate real-time APIs (e.g., Cricbuzz, ESPNcricinfo)
+- Show match timelines or momentum graphs
+- Include venue, weather, and toss conditions
+- Add batsman/bowler features (strike rate, match-up analysis)
+- Extend to **T20/Tests** and build mobile-first version
