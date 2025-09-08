@@ -1,0 +1,973 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fitness Coach Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1f2937, #111827); }
+        .video-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        #webcam { width: 100%; height: 100%; transform: scaleX(-1); object-fit: cover; }
+        #output_canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); }
+        .info-card { background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .styled-btn {
+            padding: 0.5rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; border: 2px solid transparent; flex-grow: 1; text-align: center;
+        }
+        .styled-btn:not(.bg-blue-600) { background-color: rgba(255, 255, 255, 0.1); }
+        .styled-btn:hover:not(.bg-blue-600) { border-color: #3b82f6; }
+        .input-number {
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); border-radius: 0.5rem; text-align: center; font-weight: bold; color: white; width: 100%;
+        }
+        #pose-guide svg { width: 100px; height: 100px; }
+        #break-timer-overlay { backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="gradient-bg text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-7xl w-full flex flex-col lg:flex-row items-center justify-center gap-8">
+        
+        <div class="flex flex-col items-center gap-4 order-2 lg:order-1 w-full max-w-[640px]">
+            <div class="video-container">
+                <video id="webcam" autoplay playsinline></video>
+                <canvas id="output_canvas"></canvas>
+                <div id="break-timer-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-70 flex-col justify-center items-center z-10 hidden">
+                    <h3 class="text-2xl font-bold text-blue-400">BREAK TIME</h3>
+                    <p id="break-timer" class="text-8xl font-bold">30</p>
+                </div>
+            </div>
+            <button id="startButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-105 shadow-lg w-full">
+                Start AI Coach
+            </button>
+        </div>
+
+        <div class="w-full lg:w-2/5 space-y-3 order-1 lg:order-2">
+            <div class="text-center lg:text-left">
+                <h1 class="text-4xl font-bold">AI Fitness Coach Pro</h1>
+                <p class="text-gray-400 mt-1">Plan your workout and let our AI track you.</p>
+            </div>
+            
+            <div class="info-card p-3 rounded-2xl">
+                <h3 class="text-lg font-semibold text-center mb-2">1. Choose Your Exercise</h3>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button data-exercise="bicep_curls" class="styled-btn">Curls</button>
+                    <button data-exercise="squats" class="styled-btn">Squats</button>
+                    <button data-exercise="sit_ups" class="styled-btn">Sit-ups</button>
+                    <button data-exercise="push_ups" class="styled-btn">Push-ups</button>
+                    <button data-exercise="lateral_raises" class="styled-btn">Lat Raises</button>
+                    <button data-exercise="high_knees" class="styled-btn">High Knees</button>
+                    <button data-exercise="jumping_jacks" class="styled-btn">Jumping Jacks</button>
+                </div>
+            </div>
+
+            <div id="limb-selection-panel" class="info-card p-3 rounded-2xl hidden">
+                <h3 class="text-lg font-semibold text-center mb-2">2. Choose Side</h3>
+                <div class="flex justify-center gap-2">
+                    <button data-limb="left" class="styled-btn bg-blue-600">Left</button>
+                    <button data-limb="right" class="styled-btn">Right</button>
+                    <button data-limb="both" class="styled-btn">Both</button>
+                </div>
+            </div>
+
+            <div class="info-card p-3 rounded-2xl">
+                 <h3 class="text-lg font-semibold text-center mb-2">3. Set Your Plan</h3>
+                 <div class="grid grid-cols-3 gap-3 text-center">
+                     <div><label for="reps-input" class="font-semibold">Reps</label><input type="number" id="reps-input" value="10" class="input-number p-2 mt-1"></div>
+                     <div><label for="sets-input" class="font-semibold">Sets</label><input type="number" id="sets-input" value="3" class="input-number p-2 mt-1"></div>
+                     <div><label for="break-input" class="font-semibold">Break (s)</label><input type="number" id="break-input" value="30" class="input-number p-2 mt-1"></div>
+                 </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">REPS</p><p id="rep-counter" class="text-5xl font-bold">0</p></div>
+                <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">SETS</p><p id="set-counter" class="text-5xl font-bold">0</p></div>
+                <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">STAGE</p><p id="stage" class="text-2xl pt-2 font-bold">-</p></div>
+            </div>
+
+            <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">FEEDBACK</p><p id="feedback" class="text-xl font-semibold mt-1 h-6">Select an exercise</p></div>
+            <div class="info-card p-3 rounded-2xl"><h3 class="text-lg font-semibold text-center mb-2">Pose Guide</h3><div id="pose-guide" class="flex justify-center items-center h-28"></div></div>
+        </div>
+    </div>
+
+<script type="module">
+    // --- DOM Elements ---
+    const videoElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const startButton = document.getElementById('startButton');
+    const exerciseButtons = document.querySelectorAll('[data-exercise]');
+    const limbButtons = document.querySelectorAll('[data-limb]');
+    const limbSelectionPanel = document.getElementById('limb-selection-panel');
+    const repsInput = document.getElementById('reps-input');
+    const setsInput = document.getElementById('sets-input');
+    const breakInput = document.getElementById('break-input');
+    const repCounterElement = document.getElementById('rep-counter');
+    const setCounterElement = document.getElementById('set-counter');
+    const feedbackElement = document.getElementById('feedback');
+    const stageElement = document.getElementById('stage');
+    const poseGuideElement = document.getElementById('pose-guide');
+    const breakTimerOverlay = document.getElementById('break-timer-overlay');
+    const breakTimerElement = document.getElementById('break-timer');
+
+    // --- State Variables ---
+    let repCounter = 0, setCounter = 0;
+    let stage = 'START', leftStage = 'START', rightStage = 'START';
+    let feedbackMessage = 'Select an exercise';
+    let currentExercise = 'bicep_curls';
+    let limbSelection = 'left';
+    let isBreakTime = false;
+    let camera = null;
+
+    const poseGuideSVGs = {
+        bicep_curls: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><path d="M50 25 v50 M50 50 L35 50" /><circle cx="50" cy="20" r="5" /><path stroke-dasharray="4" opacity="0.6" d="M35 50 C 25 50, 25 35, 35 35 L 50 35" /><path d="M45 40 L50 35 L45 30" fill="none" opacity="0.6" /></g></svg>`,
+        squats: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 50 L 35 65 M50 50 L 65 65"/><path stroke-dasharray="4" opacity="0.6" d="M35 65 V 80 M65 65 V 80"/><path d="M50 55 L 50 75 M45 70 L50 75 L55 70" opacity="0.6" /></g></svg>`,
+        sit_ups: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><path d="M20 80 H 80 M30 80 L 45 65 M70 80 L55 65"/><path stroke-dasharray="4" opacity="0.6" d="M45 65 A 20 20 0 0 1 65 45" /><circle cx="68" cy="42" r="5" opacity="0.6"/><path d="M60 55 L 65 50 L 70 55" opacity="0.6" /></g></svg>`,
+        push_ups: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="35" r="5"/><path d="M20 60 H 80 M30 60 L 50 40 L 70 60" /><path stroke-dasharray="4" opacity="0.6" d="M50 40 V 55" /><path d="M45 50 L 50 55 L 55 50" opacity="0.6" /></g></svg>`,
+        lateral_raises: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 50 M50 50 L 35 50 M50 50 L 65 50"/><path stroke-dasharray="4" opacity="0.6" d="M35 50 L 25 35 M65 50 L 75 35" /><path d="M30 45 L 25 35 L 35 35" opacity="0.6" /><path d="M70 45 L 75 35 L 65 35" opacity="0.6" /></g></svg>`,
+        high_knees: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 55 L 35 75 M50 55 L 65 55" /><path stroke-dasharray="4" opacity="0.6" d="M65 55 L 65 75"/><path d="M40 60 L 35 55 L 30 60" opacity="0.6"/></g></svg>`,
+        jumping_jacks: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="25" r="5" /><path d="M50 30 V 60 M50 60 L 40 80 M50 60 L 60 80 M50 45 L 40 45 M50 45 L 60 45" /><path stroke-dasharray="4" opacity="0.6" d="M40 80 L 20 70 M60 80 L 80 70 M40 45 L 30 20 M60 45 L 70 20" /></g></svg>`,
+    };
+    
+    function calculateAngle(a, b, c) {
+        if(!a || !b || !c) return 0;
+        const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+        let angle = Math.abs(radians * 180.0 / Math.PI);
+        if (angle > 180.0) angle = 360 - angle;
+        return angle;
+    }
+
+    function updateUI() {
+        repCounterElement.textContent = repCounter;
+        setCounterElement.textContent = setCounter;
+        feedbackElement.textContent = feedbackMessage;
+        stageElement.textContent = stage;
+    }
+
+    function resetWorkoutState() {
+        repCounter = 0; setCounter = 0;
+        stage = 'START'; leftStage = 'START'; rightStage = 'START';
+        feedbackMessage = 'Get into position';
+        breakTimerOverlay.style.display = 'none'; // Use style to control display with backdrop-filter
+        updateUI();
+    }
+    
+    function startBreak() {
+        isBreakTime = true;
+        let breakDuration = parseInt(breakInput.value);
+        breakTimerElement.textContent = breakDuration;
+        breakTimerOverlay.style.display = 'flex';
+        
+        const interval = setInterval(() => {
+            breakDuration--;
+            breakTimerElement.textContent = breakDuration;
+            if (breakDuration <= 0) {
+                clearInterval(interval);
+                breakTimerOverlay.style.display = 'none';
+                isBreakTime = false;
+                repCounter = 0;
+                stage = 'START'; leftStage = 'START'; rightStage = 'START';
+                feedbackMessage = `Start Set #${setCounter + 1}`;
+                updateUI();
+            }
+        }, 1000);
+    }
+    
+    function checkSetCompletion() {
+        if (repCounter >= parseInt(repsInput.value)) {
+            setCounter++;
+            if (setCounter >= parseInt(setsInput.value)) {
+                feedbackMessage = "Workout Complete!";
+                updateUI();
+                if (camera) {
+                    camera.stop();
+                    camera = null;
+                }
+                startButton.textContent = 'Start AI Coach';
+            } else {
+                startBreak();
+            }
+        }
+    }
+
+    // --- Exercise Handlers ---
+    function handleBicepCurls(lm) {
+        const landmarks = {
+            left: { s: lm[11], e: lm[13], w: lm[15] },
+            right: { s: lm[12], e: lm[14], w: lm[16] }
+        };
+
+        const processLimb = (limb, limbName) => {
+            if(limb.s.visibility < 0.8 || limb.e.visibility < 0.8 || limb.w.visibility < 0.8) {
+                feedbackMessage = `Keep ${limbName} arm visible`; return false;
+            }
+            const angle = calculateAngle(limb.s, limb.e, limb.w);
+            const currentStage = limbName === 'left' ? leftStage : rightStage;
+            let newStage = currentStage;
+            
+            if (angle > 160) newStage = 'DOWN';
+            if (angle < 45 && currentStage === 'DOWN') {
+                if (limbSelection !== 'both') {
+                    repCounter++;
+                    feedbackMessage = 'Good Rep!';
+                    checkSetCompletion();
+                }
+                newStage = 'UP';
+            }
+            if (limbName === 'left') leftStage = newStage; else rightStage = newStage;
+            return newStage === 'UP';
+        };
+
+        let leftDone = false, rightDone = false;
+        if(limbSelection === 'left' || limbSelection === 'both') leftDone = processLimb(landmarks.left, 'left');
+        if(limbSelection === 'right' || limbSelection === 'both') rightDone = processLimb(landmarks.right, 'right');
+        
+        if(limbSelection === 'both' && leftDone && rightDone) {
+            repCounter++;
+            feedbackMessage = 'Good Rep!';
+            leftStage = 'RESET'; rightStage = 'RESET'; // Prevent double counting
+            checkSetCompletion();
+        }
+        stage = limbSelection === 'left' ? leftStage : rightStage; // For simple UI display
+    }
+
+    function handleLateralRaises(lm) {
+        const landmarks = {
+            left: { s: lm[11], e: lm[13], h: lm[23] },
+            right: { s: lm[12], e: lm[14], h: lm[24] }
+        };
+
+        const processLimb = (limb, limbName) => {
+            if(limb.s.visibility < 0.8 || limb.e.visibility < 0.8 || limb.h.visibility < 0.8) {
+                feedbackMessage = `Keep ${limbName} side visible`; return false;
+            }
+            const angle = calculateAngle(limb.h, limb.s, limb.e);
+            const currentStage = limbName === 'left' ? leftStage : rightStage;
+            let newStage = currentStage;
+
+            if (angle < 30) newStage = 'DOWN';
+            if (angle > 80 && currentStage === 'DOWN') {
+                if (limbSelection !== 'both') {
+                    repCounter++;
+                    feedbackMessage = 'Good Raise!';
+                    checkSetCompletion();
+                }
+                newStage = 'UP';
+            }
+            if (limbName === 'left') leftStage = newStage; else rightStage = newStage;
+            return newStage === 'UP';
+        };
+        
+        let leftDone = false, rightDone = false;
+        if(limbSelection === 'left' || limbSelection === 'both') leftDone = processLimb(landmarks.left, 'left');
+        if(limbSelection === 'right' || limbSelection === 'both') rightDone = processLimb(landmarks.right, 'right');
+
+        if(limbSelection === 'both' && leftDone && rightDone) {
+            repCounter++;
+            feedbackMessage = 'Good Raise!';
+            leftStage = 'RESET'; rightStage = 'RESET';
+            checkSetCompletion();
+        }
+        stage = limbSelection === 'left' ? leftStage : rightStage;
+    }
+    
+    function handleSquats(lm) {
+        const h = lm[23], k = lm[25], a = lm[27];
+        if(h.visibility < 0.8 || k.visibility < 0.8 || a.visibility < 0.8) { feedbackMessage = "Keep left leg visible"; return; }
+        const angle = calculateAngle(h, k, a);
+        if (angle > 160) stage = 'UP';
+        if (angle < 90 && stage === 'UP') { stage = 'DOWN'; repCounter++; feedbackMessage = 'Good Squat!'; checkSetCompletion(); }
+    }
+    function handlePushUps(lm) {
+        const s = lm[11], e = lm[13], w = lm[15];
+        if(s.visibility < 0.8 || e.visibility < 0.8 || w.visibility < 0.8) { feedbackMessage = "Keep left arm visible"; return; }
+        const angle = calculateAngle(s, e, w);
+        if (angle > 160) stage = 'UP';
+        if (angle < 90 && stage === 'UP') { stage = 'DOWN'; repCounter++; feedbackMessage = 'Good Push-up!'; checkSetCompletion(); }
+    }
+    function handleSitUps(lm) {
+        const s = lm[11], h = lm[23], k = lm[25];
+        if(s.visibility < 0.8 || h.visibility < 0.8 || k.visibility < 0.8) { feedbackMessage = "Position your left side to cam"; return; }
+        const angle = calculateAngle(s, h, k);
+        if (angle > 150) stage = 'DOWN';
+        if (angle < 80 && stage === 'DOWN') { stage = 'UP'; repCounter++; feedbackMessage = 'Good Sit-up!'; checkSetCompletion(); }
+    }
+    function handleHighKnees(lm) {
+        const lk = lm[25], lh = lm[23], rk = lm[26], rh = lm[24];
+        if(lk.visibility < 0.8 || lh.visibility < 0.8 || rk.visibility < 0.8 || rh.visibility < 0.8) { feedbackMessage = "Face the camera"; return; }
+        if (stage === 'START' || stage === 'RIGHT_UP') { if (lk.y < lh.y) stage = 'LEFT_UP'; }
+        if (stage === 'LEFT_UP') { if (rk.y < rh.y) { stage = 'RIGHT_UP'; repCounter++; feedbackMessage = "Good!"; checkSetCompletion(); } }
+    }
+    function handleJumpingJacks(lm) {
+        const lw = lm[15], rw = lm[16], ls = lm[11], rs = lm[12], la = lm[27], ra = lm[28];
+        if(lw.visibility < 0.5 || rw.visibility < 0.5 || la.visibility < 0.5 || ra.visibility < 0.5) { feedbackMessage = "Face cam, be fully visible"; return; }
+        const wristsAboveShoulders = lw.y < ls.y && rw.y < rs.y;
+        const anklesApart = Math.abs(la.x - ra.x) > Math.abs(ls.x - rs.x) * 0.8;
+        if (!wristsAboveShoulders && !anklesApart) stage = 'IN';
+        if (wristsAboveShoulders && anklesApart && stage === 'IN') { stage = 'OUT'; repCounter++; feedbackMessage = 'Good Jack!'; checkSetCompletion(); }
+    }
+
+    // --- Main Logic ---
+    const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    
+    function onResults(results) {
+        if (isBreakTime || !camera) return;
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        if (results.poseLandmarks) {
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#00B8FF', lineWidth: 2 });
+            drawLandmarks(canvasCtx, results.poseLandmarks, { color: '#FF00A2', lineWidth: 1, radius: 3 });
+            const handler = {
+                bicep_curls: handleBicepCurls, squats: handleSquats, sit_ups: handleSitUps,
+                push_ups: handlePushUps, lateral_raises: handleLateralRaises, high_knees: handleHighKnees,
+                jumping_jacks: handleJumpingJacks
+            }[currentExercise];
+            if(handler) handler(results.poseLandmarks);
+        } else { feedbackMessage = 'No person detected'; }
+        updateUI();
+        canvasCtx.restore();
+    }
+    pose.onResults(onResults);
+
+    // --- Event Listeners ---
+    startButton.addEventListener('click', async () => {
+        if (camera) {
+            camera.stop(); camera = null; startButton.textContent = 'Start AI Coach'; feedbackElement.textContent = 'Coach is paused.';
+        } else {
+            resetWorkoutState();
+            startButton.textContent = 'Starting...'; startButton.disabled = true;
+            camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    await pose.send({image: videoElement})
+                },
+                width: 640, height: 480
+            });
+            await camera.start();
+            startButton.textContent = 'Stop AI Coach'; startButton.disabled = false;
+        }
+    });
+
+    exerciseButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (camera) return;
+            currentExercise = btn.dataset.exercise;
+            resetWorkoutState();
+            exerciseButtons.forEach(b => b.classList.remove('bg-blue-600'));
+            btn.classList.add('bg-blue-600');
+            poseGuideElement.innerHTML = poseGuideSVGs[currentExercise] || '';
+
+            if (['bicep_curls', 'lateral_raises'].includes(currentExercise)) {
+                limbSelectionPanel.classList.remove('hidden');
+            } else {
+                limbSelectionPanel.classList.add('hidden');
+            }
+        });
+    });
+
+    limbButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (camera) return;
+            limbSelection = btn.dataset.limb;
+            limbButtons.forEach(b => b.classList.remove('bg-blue-600'));
+            btn.classList.add('bg-blue-600');
+        });
+    });
+
+    // --- Initial State ---
+    const setActiveButton = (selector, dataValue) => {
+        document.querySelectorAll(selector).forEach(b => b.classList.remove('bg-blue-600'));
+        document.querySelector(`${selector}[data-${selector.substring(1, selector.indexOf('-'))}="${dataValue}"]`).classList.add('bg-blue-600');
+    };
+    setActiveButton('[data-exercise]', currentExercise);
+    poseGuideElement.innerHTML = poseGuideSVGs[currentExercise];
+    resetWorkoutState();
+    if (['bicep_curls', 'lateral_raises'].includes(currentExercise)) {
+        limbSelectionPanel.classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
+ -->
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fitness Coach Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1f2937, #111827); }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            padding-top: 75%; /* 4:3 Aspect Ratio, will be adjusted by JS */
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        #webcam, #output_canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+            object-fit: cover;
+        }
+        .info-card { background-color: rgba(31, 41, 55, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .styled-btn {
+            padding: 0.5rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; border: 2px solid transparent; flex-grow: 1; text-align: center;
+        }
+        .styled-btn:not(.bg-blue-600) { background-color: rgba(255, 255, 255, 0.1); }
+        .styled-btn:hover:not(.bg-blue-600) { border-color: #3b82f6; }
+        .input-number {
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); border-radius: 0.5rem; text-align: center; font-weight: bold; color: white; width: 100%;
+        }
+        #pose-guide svg { width: 100px; height: 100px; }
+        #break-timer-overlay { backdrop-filter: blur(8px); }
+        .exercise-category h4 {
+            color: #60a5fa; /* blue-400 */
+            font-weight: 600;
+            margin-top: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body class="gradient-bg text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="max-w-7xl w-full flex flex-col lg:flex-row items-start justify-center gap-8">
+        
+        <div class="flex flex-col items-center gap-4 order-2 lg:order-1 w-full lg:max-w-[640px]">
+            <div class="video-container">
+                <video id="webcam" autoplay playsinline></video>
+                <canvas id="output_canvas"></canvas>
+                <div id="break-timer-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-70 flex-col justify-center items-center z-10 hidden">
+                    <h3 class="text-2xl font-bold text-blue-400">BREAK TIME</h3>
+                    <p id="break-timer" class="text-8xl font-bold">30</p>
+                </div>
+            </div>
+            <button id="startButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-105 shadow-lg w-full">
+                Start AI Coach
+            </button>
+        </div>
+
+        <div class="w-full lg:max-w-md space-y-3 order-1 lg:order-2">
+            <div class="text-center lg:text-left">
+                <h1 class="text-4xl font-bold">AI Fitness Coach Pro</h1>
+                <p class="text-gray-400 mt-1">Plan your workout and let our AI track you.</p>
+            </div>
+            
+            <div class="info-card p-4 rounded-2xl max-h-[40vh] lg:max-h-[50vh] overflow-y-auto">
+                <h3 class="text-lg font-semibold text-center mb-2">1. Choose Your Exercise</h3>
+                
+                <div class="exercise-category">
+                    <h4>Warm Up</h4>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button data-exercise="neck_rolls" class="styled-btn">Neck Rolls</button>
+                        <button data-exercise="shoulder_shrugs" class="styled-btn">Shrugs</button>
+                        <button data-exercise="arm_circles" class="styled-btn">Arm Circles</button>
+                        <button data-exercise="hip_circles" class="styled-btn">Hip Circles</button>
+                        <button data-exercise="cat_cow" class="styled-btn">Cat-Cow</button>
+                    </div>
+                </div>
+
+                <div class="exercise-category">
+                    <h4>Strength Training</h4>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button data-exercise="bicep_curls" class="styled-btn bg-blue-600">Curls</button>
+                        <button data-exercise="lateral_raises" class="styled-btn">Lat Raises</button>
+                        <button data-exercise="squats" class="styled-btn">Squats</button>
+                        <button data-exercise="lunges" class="styled-btn">Lunges</button>
+                        <button data-exercise="push_ups" class="styled-btn">Push-ups</button>
+                        <button data-exercise="sit_ups" class="styled-btn">Sit-ups</button>
+                        <button data-exercise="leg_raises" class="styled-btn">Leg Raises</button>
+                        <button data-exercise="russian_twists" class="styled-btn">Rus. Twists</button>
+                        <button data-exercise="plank" class="styled-btn">Plank</button>
+                    </div>
+                </div>
+
+                <div class="exercise-category">
+                    <h4>Cardio</h4>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button data-exercise="high_knees" class="styled-btn">High Knees</button>
+                        <button data-exercise="jumping_jacks" class="styled-btn">Jumping Jacks</button>
+                        <button data-exercise="butt_kicks" class="styled-btn">Butt Kicks</button>
+                        <button data-exercise="burpees" class="styled-btn">Burpees</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="limb-selection-panel" class="info-card p-3 rounded-2xl">
+                <h3 id="limb-selection-title" class="text-lg font-semibold text-center mb-2">2. Choose Side / Direction</h3>
+                <div id="limb-buttons-container" class="flex justify-center gap-2">
+                    <button data-limb="left" class="styled-btn bg-blue-600">Left</button>
+                    <button data-limb="right" class="styled-btn">Right</button>
+                    <button data-limb="both" class="styled-btn">Both</button>
+                </div>
+            </div>
+
+            <div class="info-card p-3 rounded-2xl">
+                 <h3 class="text-lg font-semibold text-center mb-2">3. Set Your Plan</h3>
+                 <div class="grid grid-cols-3 gap-3 text-center">
+                     <div><label id="reps-label" for="reps-input" class="font-semibold">Reps</label><input type="number" id="reps-input" value="10" class="input-number p-2 mt-1"></div>
+                     <div><label for="sets-input" class="font-semibold">Sets</label><input type="number" id="sets-input" value="3" class="input-number p-2 mt-1"></div>
+                     <div><label for="break-input" class="font-semibold">Break (s)</label><input type="number" id="break-input" value="30" class="input-number p-2 mt-1"></div>
+                 </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">REPS</p><p id="rep-counter" class="text-5xl font-bold">0</p></div>
+                <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">SETS</p><p id="set-counter" class="text-5xl font-bold">0</p></div>
+                <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">STAGE</p><p id="stage" class="text-2xl pt-2 font-bold">-</p></div>
+            </div>
+
+            <div class="info-card p-4 rounded-2xl text-center"><p class="text-gray-400">FEEDBACK</p><p id="feedback" class="text-xl font-semibold mt-1 h-6">Select an exercise</p></div>
+            <div class="info-card p-3 rounded-2xl"><h3 class="text-lg font-semibold text-center mb-2">Pose Guide</h3><div id="pose-guide" class="flex justify-center items-center h-28"></div></div>
+        </div>
+    </div>
+
+<script type="module">
+    // --- DOM Elements ---
+    const videoElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const startButton = document.getElementById('startButton');
+    const exerciseButtons = document.querySelectorAll('[data-exercise]');
+    const limbSelectionPanel = document.getElementById('limb-selection-panel');
+    const limbSelectionTitle = document.getElementById('limb-selection-title');
+    const limbButtonsContainer = document.getElementById('limb-buttons-container');
+    const repsInput = document.getElementById('reps-input');
+    const repsLabel = document.getElementById('reps-label');
+    const setsInput = document.getElementById('sets-input');
+    const breakInput = document.getElementById('break-input');
+    const repCounterElement = document.getElementById('rep-counter');
+    const setCounterElement = document.getElementById('set-counter');
+    const feedbackElement = document.getElementById('feedback');
+    const stageElement = document.getElementById('stage');
+    const poseGuideElement = document.getElementById('pose-guide');
+    const breakTimerOverlay = document.getElementById('break-timer-overlay');
+    const breakTimerElement = document.getElementById('break-timer');
+
+    // --- State Variables ---
+    let repCounter = 0, setCounter = 0, plankStartTime = 0;
+    let stage = 'START', leftStage = 'START', rightStage = 'START';
+    let feedbackMessage = 'Select an exercise';
+    let currentExercise = 'bicep_curls';
+    let limbSelection = 'left';
+    let isBreakTime = false;
+    let camera = null;
+
+    const poseGuideSVGs = {
+        bicep_curls: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><path d="M50 25 v50 M50 50 L35 50" /><circle cx="50" cy="20" r="5" /><path stroke-dasharray="4" opacity="0.6" d="M35 50 C 25 50, 25 35, 35 35 L 50 35" /><path d="M45 40 L50 35 L45 30" fill="none" opacity="0.6" /></g></svg>`,
+        squats: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 50 L 35 65 M50 50 L 65 65"/><path stroke-dasharray="4" opacity="0.6" d="M35 65 V 80 M65 65 V 80"/><path d="M50 55 L 50 75 M45 70 L50 75 L55 70" opacity="0.6" /></g></svg>`,
+        sit_ups: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><path d="M20 80 H 80 M30 80 L 45 65 M70 80 L55 65"/><path stroke-dasharray="4" opacity="0.6" d="M45 65 A 20 20 0 0 1 65 45" /><circle cx="68" cy="42" r="5" opacity="0.6"/><path d="M60 55 L 65 50 L 70 55" opacity="0.6" /></g></svg>`,
+        push_ups: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="35" r="5"/><path d="M20 60 H 80 M30 60 L 50 40 L 70 60" /><path stroke-dasharray="4" opacity="0.6" d="M50 40 V 55" /><path d="M45 50 L 50 55 L 55 50" opacity="0.6" /></g></svg>`,
+        lateral_raises: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 50 M50 50 L 35 50 M50 50 L 65 50"/><path stroke-dasharray="4" opacity="0.6" d="M35 50 L 25 35 M65 50 L 75 35" /><path d="M30 45 L 25 35 L 35 35" opacity="0.6" /><path d="M70 45 L 75 35 L 65 35" opacity="0.6" /></g></svg>`,
+        high_knees: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 55 L 35 75 M50 55 L 65 55" /><path stroke-dasharray="4" opacity="0.6" d="M65 55 L 65 75"/><path d="M40 60 L 35 55 L 30 60" opacity="0.6"/></g></svg>`,
+        jumping_jacks: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="25" r="5" /><path d="M50 30 V 60 M50 60 L 40 80 M50 60 L 60 80 M50 45 L 40 45 M50 45 L 60 45" /><path stroke-dasharray="4" opacity="0.6" d="M40 80 L 20 70 M60 80 L 80 70 M40 45 L 30 20 M60 45 L 70 20" /></g></svg>`,
+        lunges: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 50 L 35 65 V 80 M50 50 L 65 50 V 35"/><path stroke-dasharray="4" opacity="0.6" d="M35 65 L 50 65"/><path d="M45 75 L 50 80 L 55 75" opacity="0.6"/></g></svg>`,
+        burpees: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 45 L 35 60 H 65 L 50 45"/><path stroke-dasharray="4" opacity="0.6" d="M35 60 L 20 60 M65 60 L 80 60"/><path d="M45 30 L 50 25 L 55 30" opacity="0.6"/></g></svg>`,
+        plank: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="25" cy="45" r="5"/><path d="M25 50 L 75 50 M30 70 L 20 50 L 35 50 L 80 50 L 70 70"/></g></svg>`,
+        cat_cow: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><path d="M20 60 Q 50 40 80 60"/><path stroke-dasharray="4" opacity="0.6" d="M20 60 Q 50 80 80 60"/></g></svg>`,
+        arm_circles: `<svg viewBox="0 0 100 100"><g stroke="white" stroke-width="3" fill="none" stroke-linecap="round"><circle cx="50" cy="20" r="5"/><path d="M50 25 V 50 M50 50 L 25 50"/><circle cx="50" cy="50" r="25" stroke-dasharray="4" opacity="0.6"/></g></svg>`,
+    };
+    
+    function calculateAngle(a, b, c) {
+        if(!a || !b || !c || a.visibility < 0.5 || b.visibility < 0.5 || c.visibility < 0.5) return 0;
+        const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+        let angle = Math.abs(radians * 180.0 / Math.PI);
+        if (angle > 180.0) angle = 360 - angle;
+        return angle;
+    }
+
+    function updateUI() {
+        repCounterElement.textContent = repCounter;
+        setCounterElement.textContent = setCounter;
+        feedbackElement.textContent = feedbackMessage;
+        stageElement.textContent = stage;
+    }
+
+    function resetWorkoutState() {
+        repCounter = 0; setCounter = 0;
+        stage = 'START'; leftStage = 'START'; rightStage = 'START';
+        feedbackMessage = 'Get into position';
+        plankStartTime = 0;
+        breakTimerOverlay.style.display = 'none';
+        updateUI();
+    }
+    
+    function startBreak() {
+        isBreakTime = true;
+        let breakDuration = parseInt(breakInput.value);
+        breakTimerElement.textContent = breakDuration;
+        breakTimerOverlay.style.display = 'flex';
+        
+        const interval = setInterval(() => {
+            breakDuration--;
+            breakTimerElement.textContent = breakDuration;
+            if (breakDuration <= 0) {
+                clearInterval(interval);
+                breakTimerOverlay.style.display = 'none';
+                isBreakTime = false;
+                repCounter = 0;
+                stage = 'START'; leftStage = 'START'; rightStage = 'START';
+                feedbackMessage = `Start Set #${setCounter + 1}`;
+                updateUI();
+            }
+        }, 1000);
+    }
+    
+    function checkSetCompletion() {
+        if (repCounter >= parseInt(repsInput.value)) {
+            setCounter++;
+            if (setCounter >= parseInt(setsInput.value)) {
+                feedbackMessage = "Workout Complete!";
+                stage = "DONE";
+                updateUI();
+                if (camera) {
+                    camera.stop();
+                    camera = null;
+                }
+                startButton.textContent = 'Start AI Coach';
+            } else {
+                startBreak();
+            }
+        }
+    }
+
+    // --- Exercise Handlers ---
+    // Strength
+    function handleBicepCurls(lm) {
+        const landmarks = { left: { s: lm[11], e: lm[13], w: lm[15] }, right: { s: lm[12], e: lm[14], w: lm[16] } };
+        const processLimb = (limb, limbName) => {
+            const angle = calculateAngle(limb.s, limb.e, limb.w);
+            if(angle === 0) { feedbackMessage = `Keep ${limbName} arm visible`; return false; }
+            const currentStage = limbName === 'left' ? leftStage : rightStage;
+            let newStage = currentStage;
+            if (angle > 160) newStage = 'DOWN';
+            if (angle < 45 && currentStage === 'DOWN') {
+                if (limbSelection !== 'both') { repCounter++; feedbackMessage = 'Good Rep!'; checkSetCompletion(); }
+                newStage = 'UP';
+            }
+            if (limbName === 'left') leftStage = newStage; else rightStage = newStage;
+            return newStage === 'UP';
+        };
+        let leftDone = false, rightDone = false;
+        if(limbSelection === 'left' || limbSelection === 'both') leftDone = processLimb(landmarks.left, 'left');
+        if(limbSelection === 'right' || limbSelection === 'both') rightDone = processLimb(landmarks.right, 'right');
+        if(limbSelection === 'both' && leftDone && rightDone) {
+            repCounter++; feedbackMessage = 'Good Rep!'; leftStage = 'RESET'; rightStage = 'RESET'; checkSetCompletion();
+        }
+        stage = limbSelection === 'left' ? leftStage : (limbSelection === 'right' ? rightStage : leftStage + " / " + rightStage);
+    }
+    function handleLateralRaises(lm) {
+        const landmarks = { left: { s: lm[11], e: lm[13], h: lm[23] }, right: { s: lm[12], e: lm[14], h: lm[24] } };
+        const processLimb = (limb, limbName) => {
+            const angle = calculateAngle(limb.h, limb.s, limb.e);
+            if(angle === 0) { feedbackMessage = `Keep ${limbName} side visible`; return false; }
+            const currentStage = limbName === 'left' ? leftStage : rightStage;
+            let newStage = currentStage;
+            if (angle < 30) newStage = 'DOWN';
+            if (angle > 80 && currentStage === 'DOWN') {
+                if (limbSelection !== 'both') { repCounter++; feedbackMessage = 'Good Raise!'; checkSetCompletion(); }
+                newStage = 'UP';
+            }
+            if (limbName === 'left') leftStage = newStage; else rightStage = newStage;
+            return newStage === 'UP';
+        };
+        let leftDone = false, rightDone = false;
+        if(limbSelection === 'left' || limbSelection === 'both') leftDone = processLimb(landmarks.left, 'left');
+        if(limbSelection === 'right' || limbSelection === 'both') rightDone = processLimb(landmarks.right, 'right');
+        if(limbSelection === 'both' && leftDone && rightDone) {
+            repCounter++; feedbackMessage = 'Good Raise!'; leftStage = 'RESET'; rightStage = 'RESET'; checkSetCompletion();
+        }
+        stage = limbSelection === 'left' ? leftStage : (limbSelection === 'right' ? rightStage : leftStage + " / " + rightStage);
+    }
+    function handleSquats(lm) {
+        const angle = calculateAngle(lm[23], lm[25], lm[27]);
+        if(angle === 0) { feedbackMessage = "Keep left leg visible"; return; }
+        if (angle > 160) stage = 'UP';
+        if (angle < 90 && stage === 'UP') { stage = 'DOWN'; repCounter++; feedbackMessage = 'Good Squat!'; checkSetCompletion(); }
+    }
+    function handlePushUps(lm) {
+        const angle = calculateAngle(lm[11], lm[13], lm[15]);
+        if(angle === 0) { feedbackMessage = "Keep left arm visible"; return; }
+        if (angle > 160) stage = 'UP';
+        if (angle < 90 && stage === 'UP') { stage = 'DOWN'; repCounter++; feedbackMessage = 'Good Push-up!'; checkSetCompletion(); }
+    }
+    function handleSitUps(lm) {
+        const angle = calculateAngle(lm[11], lm[23], lm[25]);
+        if(angle === 0) { feedbackMessage = "Position your left side to cam"; return; }
+        if (angle > 150) stage = 'DOWN';
+        if (angle < 80 && stage === 'DOWN') { stage = 'UP'; repCounter++; feedbackMessage = 'Good Sit-up!'; checkSetCompletion(); }
+    }
+    function handleLunges(lm) {
+        const leg = limbSelection === 'left' ? {fH: lm[23], fK: lm[25], fA: lm[27], bK: lm[26]} : {fH: lm[24], fK: lm[26], fA: lm[28], bK: lm[25]};
+        const frontAngle = calculateAngle(leg.fH, leg.fK, leg.fA);
+        if(frontAngle === 0 || leg.bK.visibility < 0.7) { feedbackMessage = `Keep ${limbSelection} leg forward & visible`; return; }
+        if (frontAngle > 160) stage = 'UP';
+        if (frontAngle < 100 && leg.bK.y > leg.fK.y * 0.95 && stage === 'UP') {
+            stage = 'DOWN'; repCounter++; feedbackMessage = 'Good Lunge!'; checkSetCompletion();
+        }
+    }
+    function handleLegRaises(lm) {
+        const leg = limbSelection === 'left' ? {s: lm[11], h: lm[23], a: lm[27]} : {s: lm[12], h: lm[24], a: lm[28]};
+        const angle = calculateAngle(leg.s, leg.h, leg.a);
+        if(angle === 0) { feedbackMessage = `Lie on your side, ${limbSelection} leg up`; return; }
+        if (angle < 90) stage = 'DOWN';
+        if (angle > 120 && stage === 'DOWN') { stage = 'UP'; repCounter++; feedbackMessage = 'Good Raise!'; checkSetCompletion(); }
+    }
+    function handleRussianTwists(lm) {
+        const leftHip = lm[23], rightHip = lm[24], leftWrist = lm[15], rightWrist = lm[16];
+        if(leftHip.visibility < 0.8 || rightHip.visibility < 0.8 || leftWrist.visibility < 0.8) { feedbackMessage = 'Sit facing camera, lean back'; return; }
+        const wristX = (leftWrist.x + rightWrist.x) / 2;
+        if (stage === 'START' || stage === 'RIGHT') { if (wristX < rightHip.x) stage = 'LEFT'; }
+        if (stage === 'LEFT') { if (wristX > leftHip.x) { stage = 'RIGHT'; repCounter++; feedbackMessage = 'Twist!'; checkSetCompletion(); } }
+    }
+    function handlePlank(lm) {
+        const shoulder = lm[11], hip = lm[23], ankle = lm[27];
+        const angle = calculateAngle(shoulder, hip, ankle);
+        if (angle === 0) { feedbackMessage = "Position left side to camera"; return; }
+        if (angle > 150 && angle < 190) { // Good plank form
+            if (plankStartTime === 0) plankStartTime = Date.now();
+            const elapsed = Math.floor((Date.now() - plankStartTime) / 1000);
+            stage = "HOLDING"; feedbackMessage = `Hold: ${elapsed}s`;
+            if (elapsed >= parseInt(repsInput.value)) {
+                repCounter = repsInput.value; plankStartTime = 0; feedbackMessage = 'Good Plank!'; checkSetCompletion();
+            }
+        } else {
+            stage = "ADJUST"; feedbackMessage = "Straighten your back!"; plankStartTime = 0;
+        }
+    }
+    // Cardio
+    function handleHighKnees(lm) {
+        const lk = lm[25], lh = lm[23], rk = lm[26], rh = lm[24];
+        if(lk.visibility < 0.8 || lh.visibility < 0.8 || rk.visibility < 0.8 || rh.visibility < 0.8) { feedbackMessage = "Face the camera"; return; }
+        if (stage === 'START' || stage === 'RIGHT_UP') { if (lk.y < lh.y) stage = 'LEFT_UP'; }
+        if (stage === 'LEFT_UP') { if (rk.y < rh.y) { stage = 'RIGHT_UP'; repCounter++; feedbackMessage = "Good!"; checkSetCompletion(); } }
+    }
+    function handleJumpingJacks(lm) {
+        const lw = lm[15], rw = lm[16], ls = lm[11], rs = lm[12], la = lm[27], ra = lm[28];
+        if(lw.visibility < 0.5 || rw.visibility < 0.5 || la.visibility < 0.5 || ra.visibility < 0.5) { feedbackMessage = "Face cam, be fully visible"; return; }
+        const wristsAboveShoulders = lw.y < ls.y && rw.y < rs.y;
+        const anklesApart = Math.abs(la.x - ra.x) > Math.abs(ls.x - rs.x) * 0.8;
+        if (!wristsAboveShoulders && !anklesApart) stage = 'IN';
+        if (wristsAboveShoulders && anklesApart && stage === 'IN') { stage = 'OUT'; repCounter++; feedbackMessage = 'Good Jack!'; checkSetCompletion(); }
+    }
+    function handleButtKicks(lm) {
+        const lHeel = lm[31], lHip = lm[23], rHeel = lm[32], rHip = lm[24];
+        if (lHeel.visibility < 0.7 || rHeel.visibility < 0.7) { feedbackMessage = "Face the camera"; return; }
+        const leftKick = lHeel.y > lHip.y;
+        const rightKick = rHeel.y > rHip.y;
+        if (stage === 'START' || stage === 'RIGHT_KICK') { if (leftKick) stage = 'LEFT_KICK'; }
+        if (stage === 'LEFT_KICK') { if (rightKick) { stage = 'RIGHT_KICK'; repCounter++; feedbackMessage = "Good!"; checkSetCompletion(); } }
+    }
+    function handleBurpees(lm) {
+        const lKneeAngle = calculateAngle(lm[23], lm[25], lm[27]);
+        const lBodyAngle = calculateAngle(lm[11], lm[23], lm[27]);
+        if (lKneeAngle > 160 && (lm[15].y < lm[11].y) && stage === 'SQUAT_UP') {
+             stage = 'START'; repCounter++; feedbackMessage = "Good Burpee!"; checkSetCompletion();
+        } else if (lKneeAngle < 100 && stage === 'PLANK') { stage = 'SQUAT_UP';
+        } else if (lBodyAngle > 150 && lKneeAngle > 150 && stage === 'SQUAT_DOWN') { stage = 'PLANK';
+        } else if (lKneeAngle < 100 && (stage === 'START' || stage === 'SQUAT_UP')) { stage = 'SQUAT_DOWN';
+        }
+    }
+    // Warmup
+    function handleShoulderShrugs(lm) {
+        const lShoulder = lm[11], rShoulder = lm[12], lEar = lm[7];
+        if(lShoulder.visibility < 0.8 || lEar.visibility < 0.8) { feedbackMessage = "Face the camera"; return; }
+        const shoulderHeight = (lShoulder.y + rShoulder.y) / 2;
+        if (stage !== 'UP' && shoulderHeight < lEar.y * 1.05) { stage = 'UP';
+        } else if (stage === 'UP' && shoulderHeight > lEar.y * 1.1) {
+            stage = 'DOWN'; repCounter++; feedbackMessage = 'Good Shrug!'; checkSetCompletion();
+        }
+    }
+    function handleNeckRolls(lm) {
+        const nose = lm[0], lShoulder = lm[11], rShoulder = lm[12];
+        if(nose.visibility < 0.8) { feedbackMessage = "Face camera"; return; }
+        const shoulderCenterX = (lShoulder.x + rShoulder.x) / 2;
+        if(stage === 'START' || stage === 'RIGHT') { if (nose.x > shoulderCenterX + 0.05) stage = 'LEFT'; }
+        if(stage === 'LEFT') { if(nose.x < shoulderCenterX - 0.05) { stage = 'RIGHT'; repCounter++; feedbackMessage = 'Good Roll'; checkSetCompletion(); } }
+    }
+    function handleArmCircles(lm) {
+        const landmarks = { left: { s: lm[11], w: lm[15] }, right: { s: lm[12], w: lm[16] } };
+        const processLimb = (limb, limbName) => {
+            const currentStage = limbName === 'left' ? leftStage : rightStage;
+            let newStage = currentStage;
+            const dir = limbSelection === 'forward' ? 1 : -1;
+            if(limb.s.visibility < 0.7 || limb.w.visibility < 0.7) return false;
+
+            if (limb.w.y < limb.s.y && Math.abs(limb.w.x - limb.s.x) < 0.1) newStage = 'UP';
+            if (limb.w.x * dir < limb.s.x * dir && Math.abs(limb.w.y - limb.s.y) < 0.1 && newStage === 'UP') newStage = 'SIDE';
+            if (limb.w.y > limb.s.y && Math.abs(limb.w.x - limb.s.x) < 0.1 && newStage === 'SIDE') newStage = 'DOWN';
+            if (limb.w.x * dir > limb.s.x * dir && Math.abs(limb.w.y - limb.s.y) < 0.1 && newStage === 'DOWN') {
+                newStage = 'START';
+                if(limbSelection !== 'both') { repCounter++; feedbackMessage="Good Circle!"; checkSetCompletion(); }
+            }
+            if (limbName === 'left') leftStage = newStage; else rightStage = newStage;
+            return newStage === 'START';
+        }
+        let leftDone = false, rightDone = false;
+        if(limbSelection === 'left' || limbSelection === 'both') leftDone = processLimb(landmarks.left, 'left');
+        if(limbSelection === 'right' || limbSelection === 'both') rightDone = processLimb(landmarks.right, 'right');
+        if(limbSelection === 'both' && leftDone && rightDone) {
+            repCounter++; feedbackMessage = 'Good Circles!'; leftStage = 'RESET'; rightStage = 'RESET'; checkSetCompletion();
+        }
+        stage = leftStage;
+    }
+    function handleHipCircles(lm) {
+        const hip = lm[23];
+        if (hip.visibility < 0.6) { feedbackMessage="Face camera"; return; }
+        // This is a simplified check
+        if (stage === 'START') { stage = 'ROTATING'; setTimeout(() => { stage = 'START'; repCounter++; checkSetCompletion();}, 2000); }
+    }
+    function handleCatCow(lm) {
+        const angle = calculateAngle(lm[11], lm[23], lm[25]); // Shoulder, Hip, Knee
+        if (angle === 0) { feedbackMessage = "Position left side to camera"; return; }
+        if (angle > 100 && stage !== 'COW') stage = 'COW'; // Arched back
+        if (angle < 80 && stage === 'COW') {
+            stage = 'CAT'; // Rounded back
+            repCounter++;
+            feedbackMessage = 'Good!';
+            checkSetCompletion();
+        }
+    }
+
+    const exerciseHandlers = {
+        'bicep_curls': handleBicepCurls, 'lateral_raises': handleLateralRaises, 'squats': handleSquats, 
+        'push_ups': handlePushUps, 'sit_ups': handleSitUps, 'lunges': handleLunges, 'leg_raises': handleLegRaises, 
+        'russian_twists': handleRussianTwists, 'plank': handlePlank, 'high_knees': handleHighKnees, 
+        'jumping_jacks': handleJumpingJacks, 'butt_kicks': handleButtKicks, 'burpees': handleBurpees, 
+        'shoulder_shrugs': handleShoulderShrugs, 'neck_rolls': handleNeckRolls, 'arm_circles': handleArmCircles, 
+        'hip_circles': handleHipCircles, 'cat_cow': handleCatCow
+    };
+
+    // --- Main Logic ---
+    const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, enableSegmentation: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    
+    function onResults(results) {
+        if (isBreakTime || !camera) return;
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        if (results.poseLandmarks) {
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#00B8FF', lineWidth: 2 });
+            drawLandmarks(canvasCtx, results.poseLandmarks, { color: '#FF00A2', lineWidth: 1, radius: 3 });
+            const handler = exerciseHandlers[currentExercise];
+            if(handler) handler(results.poseLandmarks);
+        } else { feedbackMessage = 'No person detected'; }
+        updateUI();
+        canvasCtx.restore();
+    }
+    pose.onResults(onResults);
+
+    // --- Event Listeners ---
+    startButton.addEventListener('click', async () => {
+        if (camera) {
+            camera.stop(); camera = null; startButton.textContent = 'Start AI Coach'; feedbackElement.textContent = 'Coach is paused.';
+            resetWorkoutState();
+        } else {
+            resetWorkoutState();
+            startButton.textContent = 'Starting...'; startButton.disabled = true;
+            try {
+                camera = new Camera(videoElement, {
+                    onFrame: async () => await pose.send({image: videoElement}),
+                    width: 640, height: 480
+                });
+                videoElement.onloadedmetadata = () => {
+                    const aspectRatio = videoElement.videoHeight / videoElement.videoWidth;
+                    document.querySelector('.video-container').style.paddingTop = `${aspectRatio * 100}%`;
+                };
+                await camera.start();
+                startButton.textContent = 'Stop AI Coach';
+            } catch (error) {
+                console.error("Failed to start camera:", error);
+                feedbackElement.textContent = 'Could not start camera.';
+                 startButton.textContent = 'Start AI Coach';
+            } finally {
+                startButton.disabled = false;
+            }
+        }
+    });
+
+    const updateLimbSelectionUI = () => {
+        const needsLimbSelection = ['bicep_curls', 'lateral_raises', 'lunges', 'leg_raises'];
+        const needsDirectionSelection = ['arm_circles'];
+        limbSelectionPanel.classList.add('hidden');
+
+        let buttonsHTML = '';
+        if (needsLimbSelection.includes(currentExercise)) {
+            limbSelectionTitle.textContent = "2. Choose Side";
+            buttonsHTML = `<button data-limb="left" class="styled-btn bg-blue-600">Left</button>
+                           <button data-limb="right" class="styled-btn">Right</button>
+                           <button data-limb="both" class="styled-btn">Both</button>`;
+            limbSelection = 'left';
+            limbSelectionPanel.classList.remove('hidden');
+        } else if (needsDirectionSelection.includes(currentExercise)) {
+            limbSelectionTitle.textContent = "2. Choose Direction";
+            buttonsHTML = `<button data-limb="forward" class="styled-btn bg-blue-600">Forward</button>
+                           <button data-limb="backward" class="styled-btn">Backward</button>`;
+            limbSelection = 'forward';
+            limbSelectionPanel.classList.remove('hidden');
+        }
+        
+        limbButtonsContainer.innerHTML = buttonsHTML;
+        limbButtonsContainer.querySelectorAll('.styled-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (camera) return;
+                limbSelection = e.target.dataset.limb;
+                limbButtonsContainer.querySelectorAll('.styled-btn').forEach(b => b.classList.remove('bg-blue-600'));
+                e.target.classList.add('bg-blue-600');
+            });
+        });
+    };
+
+    exerciseButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (camera) return;
+            currentExercise = btn.dataset.exercise;
+            resetWorkoutState();
+            exerciseButtons.forEach(b => b.classList.remove('bg-blue-600'));
+            btn.classList.add('bg-blue-600');
+            poseGuideElement.innerHTML = poseGuideSVGs[currentExercise] || '';
+            repsLabel.textContent = currentExercise === 'plank' ? 'Time (s)' : 'Reps';
+            updateLimbSelectionUI();
+        });
+    });
+    
+    // --- Initial State ---
+    updateLimbSelectionUI();
+    resetWorkoutState();
+
+</script>
+</body>
+</html>
+
