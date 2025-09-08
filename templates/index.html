@@ -105,7 +105,7 @@
       color: var(--text-color);
       transition: all 0.3s ease;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e0eafc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e0eafc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 1rem center;
       background-size: 1em;
@@ -291,7 +291,6 @@
       text-align: center;
     }
     
-    /* Custom Modal */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -341,7 +340,7 @@
 
 <header>
     <h1>ODI Predictor</h1>
-    <a href="https://fitness-coach-pro.onrender.com/" target="_blank">AI Fitness Coach</a>
+    <a href="./project.html" target="_blank">AI Fitness Coach</a>
 </header>
 
 <h1 class="main-title">🏏 ODI Match Predictor</h1>
@@ -429,7 +428,7 @@
     "Pakistan": "https://flagcdn.com/w320/pk.png",
     "South Africa": "https://flagcdn.com/w320/za.png",
     "Sri Lanka": "https://flagcdn.com/w320/lk.png",
-    "West Indies": "https://flagcdn.com/w320/ag.png", // Corrected for West Indies Cricket
+    "West Indies": "https://flagcdn.com/w320/ag.png",
     "Zimbabwe": "https://flagcdn.com/w320/zw.png"
   };
 
@@ -491,7 +490,7 @@
     `;
   }
 
-  async function predictFirstInnings() {
+   async function predictFirstInnings() {
     if (!teamBatting || !teamBowling) {
       showModal("Please select both batting and bowling teams!");
       return;
@@ -499,7 +498,7 @@
     const curr_runs = document.getElementById("curr_runs").value;
     const curr_wickets = document.getElementById("curr_wickets").value;
     const overs = document.getElementById("overs").value;
-    
+
     if (!curr_runs || !curr_wickets || !overs) {
         showModal("Please fill in all fields for the first innings!");
         return;
@@ -507,22 +506,22 @@
 
     const resultElement = document.getElementById("prediction_result");
     resultElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Predicting...`;
-
+     
     try {
-      // MOCK API RESPONSE
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-      const randomScore = Math.floor(parseInt(curr_runs) + (50 - parseFloat(overs)) * (Math.random() * 4 + 4));
-      const data = { prediction: randomScore };
-      // END MOCK
-      
+      const response = await fetch('/predict_first_innings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ curr_runs, curr_wickets, overs })
+      });
+      const data = await response.json();
       resultElement.innerHTML = `
         Predicted Score for <img src="${flags[teamBatting]}" alt="${teamBatting}"> <strong>${teamBatting}</strong>: 
         <br>
-        <span style="font-size: 2rem; color: var(--primary-color); font-weight: 700;">${data.prediction}</span>
+        <span style="font-size: 2rem; color: var(--primary-color); font-weight: 700;">${data.prediction} Runs</span>
       `;
     } catch (error) {
-      console.error(error);
-      resultElement.textContent = "Error: Unable to get prediction!";
+      console.error("Prediction Error:", error);
+      resultElement.textContent = "Error: Could not get prediction!";
     }
   }
 
@@ -545,16 +544,12 @@
     resultElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Predicting...`;
     
     try {
-      // MOCK API RESPONSE
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-      const runs_left = target - curr_runs;
-      const balls_left = 300 - (Math.floor(overs) * 6 + (overs % 1) * 10);
-      const required_rr = (runs_left / balls_left) * 6;
-      let win_prob_team2 = 50 + (6 - required_rr) * 10 - curr_wickets * 5;
-      win_prob_team2 = Math.max(5, Math.min(95, win_prob_team2)); // Clamp between 5% and 95%
-      const data = { "Probability of Team 2 Winning": win_prob_team2 };
-      // END MOCK
-
+      const response = await fetch('/predict_second_innings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target, curr_runs, curr_wickets, overs })
+      });
+      const data = await response.json();
       const team2WinProb = data["Probability of Team 2 Winning"];
       const team1WinProb = 100 - team2WinProb;
       const probableWinner = team2WinProb > team1WinProb ? teamBowling : teamBatting;
@@ -569,8 +564,8 @@
         </span>
       `;
     } catch (error) {
-      console.error(error);
-      resultElement.textContent = "Error: Unable to get prediction!";
+      console.error("Prediction Error:", error);
+      resultElement.textContent = "Error: Could not get prediction!";
     }
   }
 </script>
