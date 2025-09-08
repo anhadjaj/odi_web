@@ -83,12 +83,52 @@
       text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
       text-align: center;
     }
+    
+    .featured-ad-container {
+        background: var(--card-bg);
+        border: 1px solid var(--primary-color);
+        border-radius: 20px;
+        padding: 25px 30px;
+        margin: 30px 0 15px; 
+        width: 90%;
+        max-width: 700px;
+        text-align: center;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 20px rgba(0, 170, 255, 0.3);
+        backdrop-filter: blur(15px);
+    }
+    .featured-ad-container h3 {
+        margin: 0 0 10px 0;
+        font-size: 1.6rem;
+        color: var(--primary-color);
+    }
+    .featured-ad-container p {
+        margin: 0 0 20px 0;
+        font-size: 1.1rem;
+        color: var(--text-color);
+    }
+    .featured-ad-container .ad-button {
+        background: var(--primary-color);
+        color: white;
+        text-decoration: none;
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    .featured-ad-container .ad-button:hover {
+        background: var(--secondary-color);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
+    }
+
 
     .team-inputs {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: 30px;
+      margin-top: 20px;
       gap: 20px;
       padding: 0 20px;
       width: 100%;
@@ -163,7 +203,7 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: 40px;
+      margin-top: 15px; /* Reduced margin to bring it closer */
       gap: 30px;
       padding: 20px;
       width: 100%;
@@ -218,8 +258,8 @@
       color: var(--text-color);
       font-size: 0.95rem;
     }
-
-    input[type="number"] {
+    
+    input[type="number"], input[type="text"] {
       width: 100%;
       padding: 14px 14px 14px 40px;
       border: 1px solid var(--border-color);
@@ -230,7 +270,7 @@
       transition: all 0.3s ease;
     }
 
-    input[type="number"]:focus {
+    input[type="number"]:focus, input[type="text"]:focus {
       border-color: var(--primary-color);
       outline: none;
       background: rgba(0, 170, 255, 0.1);
@@ -340,10 +380,16 @@
 
 <header>
     <h1>ODI Predictor</h1>
-    <a href="https://fitness-coach-pro.onrender.com/" target="_blank">AI Fitness Coach</a>
+    <a href="https://fitness-coach-pro.onrender.com/" target="_blank">AI Fitness Coach Pro</a>
 </header>
 
 <h1 class="main-title">🏏 ODI Match Predictor</h1>
+
+<div class="featured-ad-container">
+    <h3><i class="fas fa-star"></i> Try Our New Feature!</h3>
+    <p>Get personalized workout plans and real-time exercise tracking with our new AI Fitness Coach Pro.</p>
+    <a href="https://fitness-coach-pro.onrender.com/" target="_blank" class="ad-button">Try AI Fitness Coach Pro Now! <i class="fas fa-arrow-right"></i></a>
+</div>
 
 <div class="team-inputs">
   <select id="team_batting" onchange="getTeams()">
@@ -568,8 +614,8 @@
       resultElement.textContent = "Error: Could not get prediction!";
     }
   }
+  
 </script>
 
 </body>
 </html>
-
