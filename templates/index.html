@@ -274,7 +274,6 @@
       line-height: 1.6;
     }
     
-    /* --- New Prediction Output Styles --- */
     .prediction-output .winner-line {
         display: flex;
         align-items: center;
@@ -345,7 +344,6 @@
         border-radius: 4px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
-    /* --- End New Styles --- */
 
     footer {
       margin-top: 50px;
@@ -445,6 +443,11 @@
   <div class="container">
     <h2>Second Innings Prediction</h2>
     <label for="target">Target Score</label>
+    <div class="input-group">
+        <i class="fas fa-bullseye"></i>
+        <input type="number" id="target" placeholder="e.g., 289">
+    </div>
+    <label for="curr_runs2">Current Score</label>
     <div class="input-group">
         <i class="fas fa-cricket-bat"></i>
         <input type="number" id="curr_runs2" placeholder="e.g., 150">
