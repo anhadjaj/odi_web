@@ -58,11 +58,6 @@
         font-weight: 600;
     }
 
-    header .nav-links {
-        display: flex;
-        gap: 1rem;
-    }
-
     header a {
         color: #fff;
         text-decoration: none;
@@ -71,9 +66,6 @@
         border: 1px solid transparent;
         border-radius: 8px;
         transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
     }
 
     header a:hover {
@@ -91,52 +83,12 @@
       text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
       text-align: center;
     }
-    
-    .featured-ad-container {
-        background: var(--card-bg);
-        border: 1px solid var(--primary-color);
-        border-radius: 20px;
-        padding: 25px 30px;
-        margin: 30px 20px;
-        width: 90%;
-        max-width: 700px;
-        text-align: center;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 20px rgba(0, 170, 255, 0.3);
-        backdrop-filter: blur(15px);
-    }
-    .featured-ad-container h3 {
-        margin: 0 0 10px 0;
-        font-size: 1.6rem;
-        color: var(--primary-color);
-    }
-    .featured-ad-container p {
-        margin: 0 0 20px 0;
-        font-size: 1.1rem;
-        color: var(--text-color);
-    }
-    .featured-ad-container .ad-button {
-        background: var(--primary-color);
-        color: white;
-        text-decoration: none;
-        padding: 12px 30px;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        display: inline-block;
-    }
-    .featured-ad-container .ad-button:hover {
-        background: var(--secondary-color);
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
-    }
-
 
     .team-inputs {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: 20px;
+      margin-top: 30px;
       gap: 20px;
       padding: 0 20px;
       width: 100%;
@@ -211,7 +163,7 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: 15px; /* Reduced margin to bring it closer */
+      margin-top: 40px;
       gap: 30px;
       padding: 20px;
       width: 100%;
@@ -266,8 +218,8 @@
       color: var(--text-color);
       font-size: 0.95rem;
     }
-    
-    input[type="number"], input[type="text"] {
+
+    input[type="number"] {
       width: 100%;
       padding: 14px 14px 14px 40px;
       border: 1px solid var(--border-color);
@@ -278,7 +230,7 @@
       transition: all 0.3s ease;
     }
 
-    input[type="number"]:focus, input[type="text"]:focus {
+    input[type="number"]:focus {
       border-color: var(--primary-color);
       outline: none;
       background: rgba(0, 170, 255, 0.1);
@@ -321,15 +273,79 @@
       align-items: center;
       line-height: 1.6;
     }
+    
+    /* --- New Prediction Output Styles --- */
+    .prediction-output .winner-line {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        gap: 12px;
+    }
 
-    .prediction-output img {
-        width: 30px;
-        height: 20px;
+    .prediction-output .winner-line img {
+        width: 45px;
+        height: 30px;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    .prediction-output .winner-name {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .prediction-output .probability-line {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        font-size: 1.05rem;
+        width: 100%;
+    }
+
+    .prediction-output .probability-line .team-prob {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .prediction-output .probability-line img {
+        width: 24px;
+        height: 16px;
+        object-fit: cover;
         border-radius: 4px;
-        vertical-align: middle;
-        margin: 0 8px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
+
+    .prediction-output .prob-separator {
+        color: var(--border-color);
+        font-weight: 300;
+    }
+
+    .prediction-output .score-line {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        font-weight: 700;
+        margin-top: 8px;
+    }
+
+    .prediction-output .score-label {
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .prediction-output .score-label img {
+        width: 30px;
+        height: 20px;
+        object-fit: cover;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    /* --- End New Styles --- */
 
     footer {
       margin-top: 50px;
@@ -388,25 +404,10 @@
 
 <header>
     <h1>ODI Predictor</h1>
-    <div class="nav-links">
-        <a href="https://fitness-coach-pro.onrender.com/" target="_blank">
-            <i class="fas fa-dumbbell"></i>
-            <span>AI Fitness Coach</span>
-        </a>
-        <a href="https://nutriscan-pro.onrender.com" target="_blank">
-            <i class="fas fa-utensils"></i>
-            <span>NutriScan Pro</span>
-        </a>
-    </div>
+    <a href="https://fitness-coach-pro.onrender.com/" target="_blank">AI Fitness Coach</a>
 </header>
 
 <h1 class="main-title">🏏 ODI Match Predictor</h1>
-
-<div class="featured-ad-container">
-    <h3><i class="fas fa-star"></i> Try Our NEW App!</h3>
-    <p>Use your camera to instantly track calories, macros, and more with our AI-powered food scanner, NutriScan Pro.</p>
-    <a href="https://nutriscan-pro.onrender.com" target="_blank" class="ad-button">Try NutriScan Pro Now! <i class="fas fa-arrow-right"></i></a>
-</div>
 
 <div class="team-inputs">
   <select id="team_batting" onchange="getTeams()">
@@ -438,17 +439,12 @@
         <input type="number" step="0.1" id="overs" placeholder="e.g., 25.4">
     </div>
     <button onclick="predictFirstInnings()">Predict Final Score</button>
-    <p class="prediction-output" id="prediction_result"></p>
+    <div class="prediction-output" id="prediction_result"></div>
   </div>
 
   <div class="container">
     <h2>Second Innings Prediction</h2>
     <label for="target">Target Score</label>
-    <div class="input-group">
-        <i class="fas fa-bullseye"></i>
-        <input type="number" id="target" placeholder="e.g., 289">
-    </div>
-    <label for="curr_runs2">Current Score</label>
     <div class="input-group">
         <i class="fas fa-cricket-bat"></i>
         <input type="number" id="curr_runs2" placeholder="e.g., 150">
@@ -464,7 +460,7 @@
         <input type="number" step="0.1" id="overs2" placeholder="e.g., 30.1">
     </div>
     <button onclick="predictSecondInnings()">Predict Win Probability</button>
-    <p class="prediction-output" id="chase_result"></p>
+    <div class="prediction-output" id="chase_result"></div>
   </div>
 </div>
 
@@ -491,7 +487,7 @@
     "Pakistan": "https://flagcdn.com/w320/pk.png",
     "South Africa": "https://flagcdn.com/w320/za.png",
     "Sri Lanka": "https://flagcdn.com/w320/lk.png",
-    "West Indies": "https://flagcdn.com/w320/ag.png",
+    "West Indies": "https://flagcdn.com/w320/ag.png", // Using Antigua and Barbuda flag for West Indies
     "Zimbabwe": "https://flagcdn.com/w320/zw.png"
   };
 
@@ -568,7 +564,7 @@
     }
 
     const resultElement = document.getElementById("prediction_result");
-    resultElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Predicting...`;
+    resultElement.innerHTML = `<i class="fas fa-spinner fa-spin fa-2x"></i>`;
      
     try {
       const response = await fetch('/predict_first_innings', {
@@ -578,9 +574,10 @@
       });
       const data = await response.json();
       resultElement.innerHTML = `
-        Predicted Score for <img src="${flags[teamBatting]}" alt="${teamBatting}"> <strong>${teamBatting}</strong>: 
-        <br>
-        <span style="font-size: 2rem; color: var(--primary-color); font-weight: 700;">${data.prediction} Runs</span>
+        <div class="score-label">
+          Predicted Score for <img src="${flags[teamBatting]}" alt="${teamBatting}"> <strong>${teamBatting}</strong>
+        </div>
+        <div class="score-line">${data.prediction} Runs</div>
       `;
     } catch (error) {
       console.error("Prediction Error:", error);
@@ -604,7 +601,7 @@
     }
 
     const resultElement = document.getElementById("chase_result");
-    resultElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Predicting...`;
+    resultElement.innerHTML = `<i class="fas fa-spinner fa-spin fa-2x"></i>`;
     
     try {
       const response = await fetch('/predict_second_innings', {
@@ -618,13 +615,21 @@
       const probableWinner = team2WinProb > team1WinProb ? teamBowling : teamBatting;
 
       resultElement.innerHTML = `
-        🏆 <img src="${flags[probableWinner]}" alt="${probableWinner}"> <strong>${probableWinner}</strong> is likely to win <br>
-        <span style="font-weight: 600">
-            <img src="${flags[teamBatting]}" alt="${teamBatting}" style="width:24px; height:16px;"> ${teamBatting}: ${team1WinProb.toFixed(1)}%
-        </span> 
-        <span style="font-weight: 600">
-             | <img src="${flags[teamBowling]}" alt="${teamBowling}" style="width:24px; height:16px;"> ${teamBowling}: ${team2WinProb.toFixed(1)}%
-        </span>
+        <div class="winner-line">
+          <img src="${flags[probableWinner]}" alt="${probableWinner}">
+          <span class="winner-name">${probableWinner}</span>
+        </div>
+        <div class="probability-line">
+          <span class="team-prob">
+            <img src="${flags[teamBatting]}" alt="${teamBatting}">
+            <span>${teamBatting}: <strong>${team1WinProb.toFixed(1)}%</strong></span>
+          </span>
+          <span class="prob-separator">|</span>
+          <span class="team-prob">
+            <img src="${flags[teamBowling]}" alt="${teamBowling}">
+            <span>${teamBowling}: <strong>${team2WinProb.toFixed(1)}%</strong></span>
+          </span>
+        </div>
       `;
     } catch (error) {
       console.error("Prediction Error:", error);
